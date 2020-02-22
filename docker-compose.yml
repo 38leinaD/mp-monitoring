@@ -1,0 +1,30 @@
+version: '2.1'
+services:
+  appsvr:
+    image: testapp:latest
+    ports:
+     - "80:9080"
+    volumes:
+     - "./build/libs/testapp.war:/config/dropins/testapp.war"
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:9080/testapp/resources/health || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
+  prometheus:
+    image: prom/prometheus:v2.16.0
+    ports:
+      - 9090:9090
+    volumes:
+      - "./src/env/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+  grafana:
+    image: grafana/grafana:6.6.2
+    ports:
+      - 3000:3000
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - "./src/env/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml"
+      - "./src/env/grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml"
+      - "./src/env/grafana/liberty-metrics-dashboard.json:/var/lib/grafana/dashboards/liberty-metrics-dashboard.json"
